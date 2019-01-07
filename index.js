@@ -16,6 +16,8 @@ const tokensSecretKey = "SomeSuperSecretKey";
 
 app.use(bodyParser.json());
 
+app.use(express.static('public'));
+
 app.use(isAuth(tokensSecretKey));
 
 MongoClient.connect(dbUrl, {
@@ -125,6 +127,7 @@ MongoClient.connect(dbUrl, {
                 error: "Not authenticated, please login first",
                 message: "You probably missed Authorization token or it's expired, login again"
             });
+            return;
         }
         const userId = req.userId;
 
@@ -143,11 +146,14 @@ MongoClient.connect(dbUrl, {
             res.send({
                 email: user.email,
                 name: user.name,
+                _id: user._id,
             });
+            return;
         } catch (e) {
             res.status(404).send({
                 error: "Invalid user",
-            })
+            });
+            return;
         }
 
     });
@@ -167,6 +173,7 @@ MongoClient.connect(dbUrl, {
             }
 
             res.send({
+                _id: user._id,
                 email: user.email,
                 name: user.name,
             });
@@ -326,11 +333,15 @@ MongoClient.connect(dbUrl, {
             return;
         }
 
-        reviewsCol.insertOne({
+        await reviewsCol.insertOne({
             text,
             count,
             productId,
             authorId: req.userId,
+        });
+
+        res.send({
+            message: "submitted",
         });
     });
 
